@@ -14,7 +14,7 @@ export default function AIWritingTool() {
   const [copyFeedback, setCopyFeedback] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+ const API_URL = 'https://ai-writing-tool-backend-production.up.railway.app';
   console.log('API URL:', API_URL);
 
   const contentTypes = {
