@@ -15,6 +15,7 @@ export default function AIWritingTool() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+  console.log('API URL:', API_URL);
 
   const contentTypes = {
     linkedin: { label: 'LinkedIn Post', icon: '💼' },
@@ -275,11 +276,10 @@ export default function AIWritingTool() {
                   <button
                     key={key}
                     onClick={() => setContentType(key)}
-                    className={`w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ${
-                      contentType === key
+                    className={`w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ${contentType === key
                         ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }`}
+                      }`}
                   >
                     <span>{icon}</span>
                     {label}
@@ -322,11 +322,10 @@ export default function AIWritingTool() {
                 <button
                   onClick={generateContent}
                   disabled={loading || credits <= 0}
-                  className={`w-full py-4 rounded-lg font-bold text-white text-lg transition flex items-center justify-center gap-2 ${
-                    loading || credits <= 0
+                  className={`w-full py-4 rounded-lg font-bold text-white text-lg transition flex items-center justify-center gap-2 ${loading || credits <= 0
                       ? 'bg-gray-400 cursor-not-allowed'
                       : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-lg'
-                  }`}
+                    }`}
                 >
                   {loading ? (
                     <>
