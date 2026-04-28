@@ -429,6 +429,3 @@ If this project helped you, please give it a **⭐ star** on GitHub — it means
   <a href="https://github.com/Ankurshrivastavaa/ai-writing-tool-frontend">💻 Frontend Repo</a> •
   <a href="https://github.com/Ankurshrivastavaa/ai-writing-tool-backend">⚙️ Backend Repo</a>
 </div>
-
- 
- 
