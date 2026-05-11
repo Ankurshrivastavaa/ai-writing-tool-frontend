@@ -1,0 +1,51 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Background -->
+  <rect width="512" height="512" rx="120" fill="#020617"></rect>
+
+  <!-- Glow -->
+  <circle cx="256" cy="256" r="170" fill="url(#glow)" opacity="0.45"></circle>
+
+  <!-- Pen + AI -->
+  <path d="M256 70L365 180V340C365 360 349 376 329 376H183C163 376 147 360 147 340V180L256 70Z" fill="url(#gradient)"></path>
+
+  <!-- Inner pen -->
+  <path d="M256 150L298 240H214L256 150Z" fill="white"></path>
+
+  <!-- Center circle -->
+  <circle cx="256" cy="285" r="16" fill="white"></circle>
+
+  <!-- Circuit Lines -->
+  <g stroke="url(#gradient)" stroke-width="10" stroke-linecap="round">
+    <path d="M140 240H95"></path>
+    <path d="M417 240H372"></path>
+    <path d="M160 190H110"></path>
+    <path d="M402 190H352"></path>
+    <path d="M160 290H110"></path>
+    <path d="M402 290H352"></path>
+  </g>
+
+  <!-- Circuit Dots -->
+  <g fill="#38BDF8">
+    <circle cx="95" cy="240" r="10"></circle>
+    <circle cx="417" cy="240" r="10"></circle>
+    <circle cx="110" cy="190" r="10"></circle>
+    <circle cx="402" cy="190" r="10"></circle>
+    <circle cx="110" cy="290" r="10"></circle>
+    <circle cx="402" cy="290" r="10"></circle>
+  </g>
+
+  <!-- Gradients -->
+  <defs>
+    <linearGradient id="gradient" x1="120" y1="100" x2="400" y2="400">
+      <stop stop-color="#38BDF8"></stop>
+      <stop offset="1" stop-color="#8B5CF6"></stop>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 256) rotate(90) scale(180)">
+      <stop stop-color="#3B82F6"></stop>
+      <stop offset="1" stop-color="#8B5CF6" stop-opacity="0"></stop>
+    </radialGradient>
+  </defs>
+
+</svg>
