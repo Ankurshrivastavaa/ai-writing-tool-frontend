@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Loader, Copy, Download, RefreshCw, LogOut, Menu, X } from 'lucide-react';
 
 export default function AIWritingTool() {
@@ -13,9 +13,11 @@ export default function AIWritingTool() {
   const [credits, setCredits] = useState(10);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authLoading, setAuthLoading] = useState(false);
+  const [generateError, setGenerateError] = useState('');
 
- const API_URL = 'https://ai-writing-tool-backend-production.up.railway.app';
-  console.log('API URL:', API_URL);
+  const API_URL = 'https://ai-writing-tool-backend.onrender.com';
 
   const contentTypes = {
     linkedin: { label: 'LinkedIn Post', icon: '💼' },
@@ -25,9 +27,31 @@ export default function AIWritingTool() {
     description: { label: 'Product Description', icon: '🛍️' },
   };
 
-  // Authentication
+  // ✅ FIX 1: Check token on page load so user stays logged in after refresh
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      fetch(`${API_URL}/api/user/credits`, {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.credits !== undefined) {
+            setCredits(data.credits);
+            setIsLoggedIn(true);
+          } else {
+            localStorage.removeItem('token');
+          }
+        })
+        .catch(() => localStorage.removeItem('token'));
+    }
+  }, []);
+
+  // ✅ FIX 2: Show error messages on login failure
   const handleLogin = async (e) => {
     e.preventDefault();
+    setAuthError('');
+    setAuthLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/auth/login`, {
         method: 'POST',
@@ -41,14 +65,30 @@ export default function AIWritingTool() {
         setEmail('');
         setPassword('');
         setCredits(data.credits || 10);
+      } else {
+        setAuthError(data.error || 'Login failed. Please try again.');
       }
     } catch (error) {
-      console.error('Login failed:', error);
+      setAuthError('Cannot connect to server. Please try again.');
     }
+    setAuthLoading(false);
   };
 
+  // ✅ FIX 3: Show error messages on signup failure
   const handleSignup = async (e) => {
     e.preventDefault();
+    setAuthError('');
+
+    if (!email || !password) {
+      setAuthError('Email and password are required.');
+      return;
+    }
+    if (password.length < 6) {
+      setAuthError('Password must be at least 6 characters.');
+      return;
+    }
+
+    setAuthLoading(true);
     try {
       const response = await fetch(`${API_URL}/api/auth/signup`, {
         method: 'POST',
@@ -62,10 +102,13 @@ export default function AIWritingTool() {
         setEmail('');
         setPassword('');
         setCredits(10);
+      } else {
+        setAuthError(data.error || 'Signup failed. Please try again.');
       }
     } catch (error) {
-      console.error('Signup failed:', error);
+      setAuthError('Cannot connect to server. Please try again.');
     }
+    setAuthLoading(false);
   };
 
   const handleLogout = () => {
@@ -73,20 +116,21 @@ export default function AIWritingTool() {
     setIsLoggedIn(false);
     setSavedContent([]);
     setGeneratedContent('');
+    setCredits(10);
   };
 
-  // Generate content
+  // ✅ FIX 4: Show error if generation fails
   const generateContent = async () => {
     if (!topic.trim()) {
-      alert('Please enter a topic');
+      setGenerateError('Please enter a topic.');
       return;
     }
-
     if (credits <= 0) {
-      alert('You are out of credits! Upgrade to Pro to continue.');
+      setGenerateError('You are out of credits! Upgrade to Pro to continue.');
       return;
     }
 
+    setGenerateError('');
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
@@ -103,14 +147,15 @@ export default function AIWritingTool() {
       if (response.ok) {
         setGeneratedContent(data.content);
         setCredits(data.creditsRemaining);
+      } else {
+        setGenerateError(data.error || 'Generation failed. Please try again.');
       }
     } catch (error) {
-      console.error('Generation failed:', error);
+      setGenerateError('Cannot connect to server. Please try again.');
     }
     setLoading(false);
   };
 
-  // Save content
   const saveContent = async () => {
     if (!generatedContent) return;
     try {
@@ -121,11 +166,7 @@ export default function AIWritingTool() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          contentType,
-          topic,
-          content: generatedContent,
-        }),
+        body: JSON.stringify({ contentType, topic, content: generatedContent }),
       });
 
       if (response.ok) {
@@ -138,14 +179,12 @@ export default function AIWritingTool() {
     }
   };
 
-  // Copy to clipboard
   const copyToClipboard = (text) => {
     navigator.clipboard.writeText(text);
     setCopyFeedback('Copied!');
     setTimeout(() => setCopyFeedback(''), 2000);
   };
 
-  // Download as PDF
   const downloadPDF = () => {
     const element = document.createElement('a');
     const file = new Blob([generatedContent], { type: 'text/plain' });
@@ -167,6 +206,13 @@ export default function AIWritingTool() {
             </div>
 
             <div className="p-8">
+              {/* ✅ Error message display */}
+              {authError && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                  {authError}
+                </div>
+              )}
+
               <form onSubmit={handleLogin} className="space-y-4 mb-6">
                 <input
                   type="email"
@@ -184,9 +230,10 @@ export default function AIWritingTool() {
                 />
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition"
+                  disabled={authLoading}
+                  className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white py-3 rounded-lg font-semibold hover:shadow-lg transition disabled:opacity-50"
                 >
-                  Sign In
+                  {authLoading ? 'Signing in...' : 'Sign In'}
                 </button>
               </form>
 
@@ -201,9 +248,10 @@ export default function AIWritingTool() {
 
               <button
                 onClick={handleSignup}
-                className="w-full border-2 border-purple-600 text-purple-600 py-3 rounded-lg font-semibold hover:bg-purple-50 transition"
+                disabled={authLoading}
+                className="w-full border-2 border-purple-600 text-purple-600 py-3 rounded-lg font-semibold hover:bg-purple-50 transition disabled:opacity-50"
               >
-                Create Account
+                {authLoading ? 'Creating account...' : 'Create Account'}
               </button>
 
               <p className="text-center text-sm text-gray-600 mt-6">
@@ -267,7 +315,7 @@ export default function AIWritingTool() {
       {/* Main Content */}
       <main className="max-w-6xl mx-auto px-4 py-8">
         <div className="grid md:grid-cols-3 gap-6">
-          {/* Sidebar - Content Types */}
+          {/* Sidebar */}
           <div className="md:col-span-1">
             <div className="bg-white rounded-xl shadow-md p-6 sticky top-24">
               <h2 className="text-lg font-bold text-gray-800 mb-4">Content Types</h2>
@@ -276,10 +324,11 @@ export default function AIWritingTool() {
                   <button
                     key={key}
                     onClick={() => setContentType(key)}
-                    className={`w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ${contentType === key
+                    className={`w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center gap-3 ${
+                      contentType === key
                         ? 'bg-gradient-to-r from-purple-600 to-blue-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
+                    }`}
                   >
                     <span>{icon}</span>
                     {label}
@@ -295,16 +344,14 @@ export default function AIWritingTool() {
             </div>
           </div>
 
-          {/* Main Content Area */}
+          {/* Main Area */}
           <div className="md:col-span-2 space-y-6">
-            {/* Generate Section */}
             <div className="bg-white rounded-xl shadow-md overflow-hidden">
               <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 text-white">
                 <h2 className="text-2xl font-bold">Generate Content</h2>
               </div>
 
               <div className="p-6 space-y-6">
-                {/* Topic Input */}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-2">
                     What's your topic or idea?
@@ -318,14 +365,21 @@ export default function AIWritingTool() {
                   />
                 </div>
 
-                {/* Generate Button */}
+                {/* ✅ Error message for generation */}
+                {generateError && (
+                  <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-600 text-sm">
+                    {generateError}
+                  </div>
+                )}
+
                 <button
                   onClick={generateContent}
                   disabled={loading || credits <= 0}
-                  className={`w-full py-4 rounded-lg font-bold text-white text-lg transition flex items-center justify-center gap-2 ${loading || credits <= 0
+                  className={`w-full py-4 rounded-lg font-bold text-white text-lg transition flex items-center justify-center gap-2 ${
+                    loading || credits <= 0
                       ? 'bg-gray-400 cursor-not-allowed'
                       : 'bg-gradient-to-r from-purple-600 to-blue-600 hover:shadow-lg'
-                    }`}
+                  }`}
                 >
                   {loading ? (
                     <>
@@ -339,7 +393,6 @@ export default function AIWritingTool() {
               </div>
             </div>
 
-            {/* Generated Content */}
             {generatedContent && (
               <div className="bg-white rounded-xl shadow-md overflow-hidden">
                 <div className="bg-gradient-to-r from-green-600 to-emerald-600 p-6 text-white">
